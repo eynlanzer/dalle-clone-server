@@ -2,9 +2,13 @@ import express from "express";
 import * as dotenv from "dotenv";
 import cors from "cors";
 import { Configuration, OpenAIApi } from 'openai';
+import fs from 'fs'
+import multer from 'multer'
 // import fileUpload from 'express-fileupload'
 // import routes from './routes/index.route'
 // import './config/database'
+
+
 
 dotenv.config();
 
@@ -12,6 +16,7 @@ const app = express();
 app.use(cors());
 // const router = express.Router()
 const port = process.env.PORT || 3001;
+
 
 app.use(express.json({ limit: "50mb" }));
 
@@ -26,6 +31,17 @@ const configuration = new Configuration({
 });
 const openai = new OpenAIApi(configuration);
 
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, '')
+  },
+  filename: (req, file, cb) => {
+    console.log('file', file)
+    cb(null, Date.now() + "-" + file.originalname)
+  }
+})
+const upload = multer({ storage: storage }).single('file')
+
 app.post("/images", async (req, res) => {
   const { message } = req.body
   try {
@@ -39,6 +55,17 @@ app.post("/images", async (req, res) => {
   } catch (error) {
     console.error(error);
   }
+});
+
+app.post("/upload", (req, res) => {
+  upload(req, res, function (err) {
+    if (err instanceof multer.MulterError) {
+      return res.status(500).json(err)
+    } else if (err) {
+      return res.status(500).json(err)
+    }
+    console.log(req.file)
+  })  
 });
 
 app.listen(port, () => {
