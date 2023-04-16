@@ -16,7 +16,7 @@ const app = express();
 app.use(cors());
 // const router = express.Router()
 const port = process.env.PORT || 3001;
-
+let filePath
 
 app.use(express.json({ limit: "50mb" }));
 
@@ -63,9 +63,23 @@ app.post("/upload", (req, res) => {
       return res.status(500).json(err)
     } else if (err) {
       return res.status(500).json(err)
-    }
-    console.log(req.file)
+    } 
+    console.log(req.file.path)
+    filePath = req.file.path
   })  
+});
+
+app.post("/variations", async (req, res) => {
+  try {
+    const response = await openai.createImageVariation(
+      fs.createReadStream(filePath),
+      4,
+      "1024x1024"
+    );
+    res.send(response.data.data)
+  } catch (error) {
+    console.error(error)
+  }
 });
 
 app.listen(port, () => {
